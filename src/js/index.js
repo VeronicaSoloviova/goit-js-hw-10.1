@@ -64,6 +64,7 @@ function renderCountryList(data) {
 
 function renderCountryCard(data) {
   const markup = data
+
     .map(
       ({
         name: { official },
