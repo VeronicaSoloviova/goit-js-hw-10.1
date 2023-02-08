@@ -14,25 +14,34 @@ const refs = {
 const onSearchCountryInput = event => {
   const searchedQuery = event.target.value.trim();
   if (!searchedQuery) {
-    Notify.warning('Введіть назву країни');
     clearCountryInfo();
     clearCountryList();
     return;
   }
   fetchCountryAPI(searchedQuery)
     .then(data => {
-      //renderCountryList(data);
       if (data.length > 10) {
+        clearCountryInfo();
+        clearCountryList();
         Notify.info(
           'Too many matches found. Please enter a more specific name.'
         );
       }
+      if (data.length >= 2 && data.length <= 10) {
+        clearCountryInfo();
+        renderCountryList(data);
+      }
+      if (data.length === 1) {
+        clearCountryList();
+        renderCountryCard(data);
+      }
     })
     .catch(err => {
       if (err.message === '404') {
-        Notify.warning('Країну не знайдено');
+        Notify.failure('Oops, there is no country with that name');
+        clearCountryInfo();
+        clearCountryList();
       }
-      console.log(err);
     });
 };
 
@@ -55,15 +64,25 @@ function renderCountryList(data) {
 
 function renderCountryCard(data) {
   const markup = data
-    .map(country => {
-      return `<div>
-  <img width="25px" src="${country.flags.svg}" alt="${country.flags.alt}">
-  <h2 style="display: inline;">${country.name.common}</h2>
-</div>
-<b>Capital</b>: ${country.capital} </br>
-<b>Population</b>: ${country.population} </br>
-<b>Language</b>: ${country.language} </br>`;
-    })
+    .map(
+      ({
+        name: { official },
+        flags: { svg, alt },
+        capital,
+        population,
+        languages,
+      }) => {
+        return `
+        <div>
+           <img width="25px" src="${svg}" alt="${alt}">
+           <h2 style="display: inline;">${official}</h2>
+        </div>
+        <p>Capital:<span>${capital}</span></p>
+        <p>Population:<span>${population}</span></p>
+        <p>Languages:<span>${Object.values(languages).join(', ')}</span> </p>
+        `;
+      }
+    )
     .join('');
   refs.countryInfo.innerHTML = markup;
 }
